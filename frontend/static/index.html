@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.3.2/umd/react.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.3.2/umd/react-dom.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+
+<body>
+    <div id="content"></div>
+    <script type="text/babel">
+
+            class ContactsRepository {
+                static getContacts() {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                    }
+                    const API = 'http://localhost:50173'; // our backend
+                    return axios.get(`${API}/api/contact`,{
+                        method:'GET',
+                        headers: headers,
+                    }).then((response) => response.data).catch((err) => {
+                        console.log(err);
+                    });
+                }
+            }
+
+            class ContactsService {
+                static getContacts() {
+                    return ContactsRepository.getContacts();
+                }
+            }
+
+            class Contact extends React.Component {
+                constructor(props){
+                    super(props);
+                }
+
+                render() {
+                    return (
+                            <li className="contact">
+                                <img className="contact-image" src={this.props.image} width="60px" height="60px" />
+                                <div className="contact-info">
+                                    <div className="contact-name"> {this.props.name} </div>
+                                    <div className="contact-number"> {this.props.phoneNumber} </div>
+                                </div>
+                            </li>
+                    );
+                }
+            }
+
+            class ContactList extends React.Component {
+
+                constructor(props) {
+                    super(props);
+                    this.state = this.getInitialState();
+                    console.log(this.state);
+
+                    console.log(this.props);
+                }
+
+
+                getInitialState() {
+                    let displayedContacts = [];
+                    ContactsRepository.getContacts().then(data => {
+                        displayedContacts = data;
+                        console.log('displayedContacts', displayedContacts);
+                        this.setState({displayedContacts})
+                        })
+                    console.dir('displayedCOntacts' + displayedContacts);
+                    return {
+                        displayedContacts,
+                    };
+                }
+
+                handleSearch (event) {
+                    const searchQuery = event.target
+                                             .value
+                                             .toLocaleLowerCase();
+                    console.dir(searchQuery);
+                    let displayedContacts = this.state.displayedContacts.filter(contact => contact.name.toLowerCase().includes(searchQuery))
+                    console.dir(displayedContacts);
+                    // let displayedContacts = this.state.ALL_CONTACTS.filter(contact => {
+                    //     const searchValue = contact.name
+                    //                                .toLowerCase();
+                    //     return searchValue.includes(searchQuery);
+                    // });
+
+                    // displayedContacts = displayedContacts.length ? displayedContacts : this.state.ALL_CONTACTS;
+                    
+                    this.setState({
+                        displayedContacts
+                    });
+                }
+
+                render() {
+                    return (
+                        <div className="contacts">
+                            <input type="text" className="search-field" onChange={this.handleSearch.bind(this)}/>
+                            <ul className="contacts-list">
+                                {
+                                    this.state.displayedContacts.map(contact =>
+                                        (<Contact
+                                                key={contact.guid}
+                                                name= {contact.name}
+                                                phoneNumber={contact.phoneNumber}
+                                                image={contact.image}
+                                        />))
+                                }
+                            </ul>
+                        </div>
+                    );
+                }
+            }
+
+
+            const contentContainer = document.getElementById("content");
+            ReactDOM.render(
+                <ContactList />,
+                contentContainer
+            );
+
+        </script>
+
+</body>
+
+</html>
